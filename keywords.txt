@@ -1,0 +1,4 @@
+BigFont01_I2C	KEYWORD1
+clearLargeNumber	KEYWORD2
+displayLargeNumber	KEYWORD2
+displayLargeInt	KEYWORD2
