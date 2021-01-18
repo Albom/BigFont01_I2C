@@ -100,7 +100,11 @@ const uint8_t	gBigFontShapeTable[] PROGMEM	=	{
 };
 
 //************************************************************************
-//*	6 numbers for each character.  9 means BLANK
+//*	a single large character takes up 6 digits on the LCD (3 cols x 2 rows).
+//*  0-7  refers to segments in gBigFontShapeTable
+//*  32   all zeros
+//*  254  all zeros  
+//*  255  all ones
 const uint8_t	gBigFontAsciiTable[] PROGMEM	=	{
 
 	32,	32,	32,	32,	32,	32,		//	0x20	space
@@ -169,8 +173,8 @@ const uint8_t	gBigFontAsciiTable[] PROGMEM	=	{
 };
 
 //************************************************************************
-//*	we have a seperate table for the wide routines
-const uint8_t	gBigFontAsciiTableWide[] PROGMEM	=	{
+//*	separate table for wide characters
+const byte	gBigFontAsciiTableWide[] PROGMEM	=	{
 //*	this table is 10 bytes, 2 rows of 5
 //	---top------------|
 	0,	1,	3,	1,	2,	3,	32,	32,	32,	5,		//	0x4D	M		5-wide
@@ -182,16 +186,16 @@ const uint8_t	gBigFontAsciiTableWide[] PROGMEM	=	{
 };
 
 //************************************************************************
-//*	we have a seperate table for the wide routines
-BigFont01_I2C::BigFont01_I2C(LiquidCrystal_I2C* lcd) {
+//*	main class definition
+BigFont01::BigFont01(LiquidCrystal_I2C* lcd) {
 	_lcd = lcd;
 }
 
 //************************************************************************
 //* generate custom characters
 void BigFont01::begin() {
-uint8_t	customCharDef[10];
-uint8_t	ii;
+byte	customCharDef[10];
+byte	ii;
 int		jj;
 
 	for (ii=0; ii<8; ii++)
@@ -205,31 +209,35 @@ int		jj;
 }
 
 //************************************************************************
-//*	write a big character on the LCD display.
+//*	write a large character on the LCD display.
 //*	note: method returns the width of the character.
-int BigFont01::write(int yLocation, int xLocation, char theChar) {
+//* Parameters:
+//*   y       yposition or column
+//*   x       xposition or row
+//*   c       single ascii character to display
+int BigFont01::writechar(int y, int x, char c) {
 int		offset;
-int		ii;
-char	theByte;
+int		i;
+char	b;
 boolean	specialCase;
 int		specialIndex;
 int		charWidth;
 
-	if (theChar == 0x20)
+	if (c == 0x20)
 	{
 		return(2);
 	}
-	else if (theChar < 0x20)
+	else if (c < 0x20)
 	{
 		return(0);
 	}
 
-	if (theChar >= 'A')
+	if (c >= 'A')
 	{
-		theChar	=	theChar & 0x5F;	//*	force to upper case
+		c	=	c & 0x5F;	//*	force to upper case
 	}
 	specialCase	=	true;
-	switch (theChar)
+	switch (c)
 	{
 		case 'M':	charWidth	=	5;	specialIndex	=	0;	break;
 		case 'N':	charWidth	=	4;	specialIndex	=	1;	break;
@@ -241,20 +249,20 @@ int		charWidth;
 		default:
 			charWidth	=	3;
 			specialCase	=	false;
-			offset		=	6 * (theChar - 0x20);
-			_lcd->setCursor(xLocation, yLocation);
-			for (ii=0; ii<3; ii++)
+			offset		=	6 * (c - 0x20);
+			_lcd->setCursor(x, y);
+			for (i=0; i<3; i++)
 			{
-				theByte	=	pgm_read_byte_near(gBigFontAsciiTable + offset + ii);
-				_lcd->write(theByte);
+				b	=	pgm_read_byte_near(gBigFontAsciiTable + offset + i);
+				_lcd->write(b);
 			}
 
-			_lcd->setCursor(xLocation, yLocation + 1);
+			_lcd->setCursor(x, y + 1);
 			offset	+=	3;
-			for (ii=0; ii<3; ii++)
+			for (i=0; i<3; i++)
 			{
-				theByte	=	pgm_read_byte_near(gBigFontAsciiTable + offset + ii);
-				_lcd->write(theByte);
+				b	=	pgm_read_byte_near(gBigFontAsciiTable + offset + i);
+				_lcd->write(b);
 			}
 			break;
 	}
@@ -262,21 +270,82 @@ int		charWidth;
 	{
 		//*
 		offset		=	10 * specialIndex;
-		_lcd->setCursor(xLocation, yLocation);
-		for (ii=0; ii<charWidth; ii++)
+		_lcd->setCursor(x, y);
+		for (i=0; i<charWidth; i++)
 		{
-			theByte	=	pgm_read_byte_near(gBigFontAsciiTableWide + offset + ii);
-			_lcd->write(theByte);
+			b	=	pgm_read_byte_near(gBigFontAsciiTableWide + offset + i);
+			_lcd->write(b);
 		}
 
-		_lcd->setCursor(xLocation, yLocation + 1);
+		_lcd->setCursor(x, y + 1);
 		offset	+=	5;
-		for (ii=0; ii<charWidth; ii++)
+		for (i=0; i<charWidth; i++)
 		{
-			theByte	=	pgm_read_byte_near(gBigFontAsciiTableWide + offset + ii);
-			_lcd->write(theByte);
+			b	=	pgm_read_byte_near(gBigFontAsciiTableWide + offset + i);
+			_lcd->write(b);
 		}
 	}
 	return(charWidth + 1);
 }
 
+//************************************************************************
+//* clear leading digits
+//* Parameters:
+//*   y       yposition or column
+//*   x       xposition or row
+void BigFont01::clear(int y, int x)
+{
+  _lcd->setCursor(y,x);
+  _lcd->print("   ");
+  _lcd->setCursor(y,x+1); 
+  _lcd->print("   ");
+}
+
+//************************************************************************
+//* prints an integer to the display using large characters
+//* Parameters:
+//*   y       yposition or column
+//*   x       xposition or row
+//*   d       number of digits.  For example, 4 digits => [   9] [  99] [ 999] [9999]
+//*   l       leading zeros (false = no, true = yes)
+void BigFont01::writeint(int y, int x, int n, byte d, bool l)
+{
+  boolean isNegative = false;
+  if(n < 0)
+  {
+    isNegative = true;
+    n = abs(n);
+  }
+  byte numString[d];
+  byte index = d - 1;
+  while(index)
+  {
+    numString[index] = n % 10;
+	n /= 10;
+	index--;
+  }
+  numString[0] = n % 10;
+  
+  for (int i = 0; i < d; i++)
+  {
+    if(numString[i] == 0 && !l && i < d - 1)
+    {
+      //clear(y, (i * 3) + x);
+    }
+    else
+    {
+	  writechar(y, (i * 3) + x, numString[i] + '0');
+      l = true;
+	  //if (isNegative)
+      //{
+       // _lcd->setCursor(max(0, (i * 3) - 2 + x), 0);
+		//if(numString[i] == 1)
+		//{
+		//  
+		//}
+		//_lcd->write(45); // "-"
+		//isNegative = false;
+      //}
+    }
+  }
+}
