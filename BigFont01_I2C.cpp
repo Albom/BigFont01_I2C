@@ -306,6 +306,7 @@ void BigFont01_I2C::clear(int y, int x)
 //* Parameters:
 //*   y       yposition or column
 //*   x       xposition or row
+//*   n       number to display (integer)
 //*   d       number of digits.  For example, 4 digits => [   9] [  99] [ 999] [9999]
 //*   l       leading zeros (false = no, true = yes)
 void BigFont01_I2C::writeint(int y, int x, int n, byte d, bool l)
