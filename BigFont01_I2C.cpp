@@ -187,13 +187,13 @@ const byte	gBigFontAsciiTableWide[] PROGMEM	=	{
 
 //************************************************************************
 //*	main class definition
-BigFont01::BigFont01(LiquidCrystal_I2C* lcd) {
+BigFont01_I2C::BigFont01_I2C(LiquidCrystal_I2C* lcd) {
 	_lcd = lcd;
 }
 
 //************************************************************************
 //* generate custom characters
-void BigFont01::begin() {
+void BigFont01_I2C::begin() {
 byte	customCharDef[10];
 byte	ii;
 int		jj;
@@ -215,7 +215,7 @@ int		jj;
 //*   y       yposition or column
 //*   x       xposition or row
 //*   c       single ascii character to display
-int BigFont01::writechar(int y, int x, char c) {
+int BigFont01_I2C::writechar(int y, int x, char c) {
 int		offset;
 int		i;
 char	b;
@@ -293,7 +293,7 @@ int		charWidth;
 //* Parameters:
 //*   y       yposition or column
 //*   x       xposition or row
-void BigFont01::clear(int y, int x)
+void BigFont01_I2C::clear(int y, int x)
 {
   _lcd->setCursor(y,x);
   _lcd->print("   ");
@@ -308,7 +308,7 @@ void BigFont01::clear(int y, int x)
 //*   x       xposition or row
 //*   d       number of digits.  For example, 4 digits => [   9] [  99] [ 999] [9999]
 //*   l       leading zeros (false = no, true = yes)
-void BigFont01::writeint(int y, int x, int n, byte d, bool l)
+void BigFont01_I2C::writeint(int y, int x, int n, byte d, bool l)
 {
   boolean isNegative = false;
   if(n < 0)

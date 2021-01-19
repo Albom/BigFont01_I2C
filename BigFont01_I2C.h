@@ -4,9 +4,9 @@
 #include "Arduino.h"
 #include "LiquidCrystal_I2C.h"
 
-class BigFont01 {
+class BigFont01_I2C {
 	public:
-		BigFont01(LiquidCrystal_I2C*);
+		BigFont01_I2C(LiquidCrystal_I2C*);
 		void begin();
 		int  writechar(int, int, char);                // col, row, single ascii character
 		void clear(int, int);                          // col, row
